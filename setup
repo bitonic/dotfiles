@@ -1,0 +1,22 @@
+#!/bin/bash
+
+function replace() {
+    rm -f $1
+    ln $2 $1
+}
+
+replace ~/.conkerorrc                                 conkerorrc.js
+replace ~/.ghci                                       ghci
+replace ~/.i3/config                                  i3
+replace ~/.config/Terminal/terminalrc                 terminalrc
+replace ~/.screenrc                                   screenrc
+replace ~/.tmux.conf                                  tmux.conf
+replace ~/.hgrc                                       hgrc
+replace ~/.rtorrent.rc                                rtorrentrc
+replace ~/.fonts.conf                                 fonts.conf
+
+replace ~/.emacs.d/francesco.el                       emacs/francesco.el
+
+# cabal
+cp cabal ~/.cabal/config
+sed -i s/%%USER%%/`echo $USER`/g ~/.cabal/config

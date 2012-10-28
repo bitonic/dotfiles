@@ -1,0 +1,15 @@
+[ui]
+username = Francesco Mazzoli <francesco@rabbitmq.com>
+editor   = vim
+
+[extensions]
+color =
+hgext.extdiff =
+rebase =
+record = 
+hgshelve = ~/installs/hgshelve/hgshelve.py
+churn =
+
+[extdiff]
+kompare = kompare -c
+
