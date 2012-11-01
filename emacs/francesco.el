@@ -17,11 +17,10 @@
 (require 'auto-complete-config)
 (require 'bbdb-wl)
 (require 'cl)
-(require 'xcscope)
 (require 'dbus)
-(require 'distel)
 (require 'dired)
 (require 'dired-x)
+(require 'distel)
 (require 'erc)
 (require 'flyspell)
 (require 'highlight-parentheses)
@@ -30,6 +29,7 @@
 (require 'markdown-mode)
 (require 'mime-w3m) ; If w3m is not loaded wl won't display html
 (require 'org)
+(require 'perldoc)
 (require 'saveplace)
 (require 'slime-autoloads)
 (require 'tls)
@@ -38,6 +38,7 @@
 (require 'w3m)
 (require 'whitespace)
 (require 'wl)
+(require 'xcscope)
 
 ;;; ===========================================================================
 ;;; Utils
@@ -272,10 +273,12 @@ filepath."
 ;;; C
 
 (defun my-c-k&r ()
+  (interactive)
   (setq c-default-style "k&r"
         c-basic-offset  4))
 
 (defun my-c-gnu ()
+  (interactive)
   (setq c-default-style "gnu"
         c-basic-offset  2))
 
@@ -438,11 +441,13 @@ filepath."
 
 
 ;;; ===========================================================================
-;;; org-mode
+;;; org-mode/calendar
 
 (global-set-key "\C-ca" 'org-agenda)
-(when (file-exists-p (expand-file-name "~/Documents/agenda.org"))
-  (setq org-agenda-files '("~/Documents/agenda.org")))
+(when (file-exists-p (expand-file-name "~/agenda.org"))
+  (setq org-agenda-files '("~/agenda.org")))
+(setq org-agenda-include-diary t
+      calendar-date-style      'European)
 
 ;;; ===========================================================================
 ;;; ERC
