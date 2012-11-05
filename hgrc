@@ -1,6 +1,5 @@
 [ui]
 username = Francesco Mazzoli <francesco@rabbitmq.com>
-editor   = vim
 
 [extensions]
 color =
@@ -10,6 +9,9 @@ record =
 hgshelve = ~/installs/hgshelve/hgshelve.py
 churn =
 
+[ui]
+merge = meld
+
 [extdiff]
-kompare = kompare -c
+cmd.meld
 

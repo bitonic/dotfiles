@@ -45,7 +45,8 @@
 
 (defvar my-prog-modes-hooks
   '(c-mode-hook erlang-mode-hook haskell-mode-hook emacs-lisp-mode-hook
-    lisp-mode-hook scheme-mode-hook java-mode-hook html-mode css-mode)
+    lisp-mode-hook scheme-mode-hook java-mode-hook html-mode css-mode
+    perl-mode-hook)
   "A list of hooks for major modes that deal with programming languages")
 
 (defun my-add-prog-modes-hook (hook)
@@ -95,7 +96,7 @@ filepath."
 (when window-system
   (scroll-bar-mode -1)
   (tool-bar-mode -1))
-(menu-bar-mode -1)
+;; (menu-bar-mode -1)
 (column-number-mode 1)
 
 ;;; ===========================================================================
@@ -145,18 +146,13 @@ filepath."
 
 ;; (set-frame-font "DejaVu Sans Mono-12")
 ;; (set-frame-font "Lucida Console-12")
-;; (set-frame-font "Andale Mono-12")
+;; (set-frame-font "Andale Mono-13")
+;; (set-frame-font "Courier New-13")
 
 ;;; ===========================================================================
 ;;; I don't like chords!
 
-(global-set-key (kbd "C-o") 'find-file)
-(global-set-key (kbd "C-,") 'switch-to-buffer)
-(global-set-key (kbd "C-'") 'other-window)
-
-(global-unset-key (kbd "C-x C-f"))
-(global-unset-key (kbd "C-x b"))
-(global-unset-key (kbd "C-x o"))
+(load "basic-bindings.el")
 
 ;;; flyspell takes `C-,' and 'M-TAB' to correct the word, we want that for
 ;;; `other-window'
@@ -306,6 +302,7 @@ filepath."
 ;;; ---------------------------------------------------------------------------
 ;;; Sicstus prolog
 
+(add-to-list 'exec-path (expand-file-name "~/proprietary/sicstus/bin"))
 (load "sicstus_emacs_init")
 
 ;;; ---------------------------------------------------------------------------
@@ -438,7 +435,7 @@ filepath."
 (add-hook 'latex-mode-hook (lambda () (flyspell-mode 1)))
 (add-hook 'mime-edit-mode-hook (lambda () (flyspell-mode 1)))
 (add-hook 'erc-mode-hook (lambda () (erc-spelling-mode 1)))
-
+(my-add-prog-modes-hook (lambda () (flyspell-prog-mode 1)))
 
 ;;; ===========================================================================
 ;;; org-mode/calendar
@@ -700,7 +697,8 @@ will be cleaned up")
   (draft "Drafts")
   (sent "Sent")
   (real-name "Francesco Mazzoli")
-  (signature wl-account-default-signature))
+  (signature wl-account-default-signature)
+  (draft-configs))
 
 ;; (setq wl-account-default-signature
 ;;       "\n--\nFrancesco * Often in error, never in doubt")
@@ -723,14 +721,23 @@ will be cleaned up")
           (wl-account-imap account) ":"
           (number-to-string (wl-account-imap-port account)) "!"))
 
+(defun wl-is-absolute-folder (folder)
+  (when (and (consp folder) (equal 'absolute (car folder)))
+      (cdr folder)))
+
 (defun wl-account-folder (account folder)
-  (concat "%" folder (wl-account-base-folder account)))
+  (or (wl-is-absolute-folder folder)
+      (concat "%" folder (wl-account-base-folder account))))
+
+(defun wl-draft-config-parent (folder)
+  `(string-match ,folder wl-draft-parent-folder))
 
 (defun wl-account-add-template (account &optional draft-config)
   (my-replace-if-null
    draft-config
-   `(string-match ,(concat (regexp-quote (wl-account-base-folder account)) "$")
-                  wl-draft-parent-folder))
+   `(or ,(wl-draft-config-parent
+          (concat (regexp-quote (wl-account-base-folder account)) "$"))
+        ,@(wl-account-draft-configs account)))
 
   (add-to-list 'wl-draft-config-alist
                `(,draft-config (template . ,(wl-account-name account))))
@@ -829,7 +836,7 @@ will be cleaned up")
       wl-summary-incorporate-marks '("N" "U" "!" "A" "F" "$")
 
       wl-prefetch-confirm nil
-      wl-message-buffer-prefetch-folder-list '(imap4 nntp)
+      wl-message-buffer-prefetch-folder-type-list '(imap4 nntp)
       wl-message-buffer-prefetch-depth 9
       wl-message-buffer-prefetch-threshold nil
       wl-auto-prefetch-first t
@@ -839,7 +846,9 @@ will be cleaned up")
 
       wl-use-folder-petname '(modeline read-folder ask-folder)
 
-      wl-use-scoring nil)
+      wl-use-scoring nil
+
+      elmo-localdir-folder-path (expand-file-name "~/mail"))
 
 ;;; TODO: Use this only if the folder is fully fetched
 ;; (define-key wl-folder-mode-map " "

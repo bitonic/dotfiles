@@ -13,6 +13,7 @@ altgr_alt=
 altgr_super=
 nobeep=yes
 trackpoint_accel=yes
+redshift=
 
 case "$session_manager" in
     gnome)
@@ -52,7 +53,12 @@ if [ -n "$gnome" ]; then
     /usr/lib/notification-daemon/notification-daemon &
     /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 &
 
-    gnome-keyring-daemon --start --components=gpg,pkcs11,secrets,ssh &
+    # gnome-keyring-daemon --daemonize --login --components=gpg,pkcs11,secrets,ssh &
+    gnome-keyring-daemon --daemonize --login &
+    export SSH_AUTH_SOCK
+    export GPG_AGENT_INFO
+    export GNOME_KEYRING_CONTROL
+    export GNOME_KEYRING_PID
 
     start-pulseaudio-x11
 
@@ -92,4 +98,8 @@ fi
 if [ -n "$trackpoint_accel" ]; then
     xinput set-prop "DualPoint Stick" "Device Accel Profile" 6
     xinput set-prop "DualPoint Stick" "Device Accel Constant Deceleration" 2
+fi
+
+if [ -n "$redshift" ]; then
+    redshift -l 51.5171:0.1062 -m randr &
 fi

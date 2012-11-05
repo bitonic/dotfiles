@@ -14,8 +14,10 @@ replace ~/.tmux.conf                                  tmux.conf
 replace ~/.hgrc                                       hgrc
 replace ~/.rtorrent.rc                                rtorrentrc
 replace ~/.fonts.conf                                 fonts.conf
+replace ~/.offlineimap.py                             offlineimap.py
 
 replace ~/.emacs.d/francesco.el                       emacs/francesco.el
+replace ~/.emacs.d/basic-bindings.el                  emacs/basic-bindings.el
 
 # cabal
 cp cabal ~/.cabal/config
