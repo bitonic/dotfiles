@@ -12,24 +12,25 @@
 set $mod Mod4
 
 # font for window titles. ISO 10646 = Unicode
-# font -misc-fixed-medium-r-normal-*-15-*-*-*-*-*-iso10646-*
+font -misc-fixed-medium-r-normal-*-15-*-*-*-*-*-iso10646-*
 # font -*-unifont-*-*-*-*-*-*-*-*-*-*-iso10646-*
 # font -misc-fixed-medium-r-normal-*-20-*-*-*-*-*-*-*
 # font -*-terminus-medium-*-*-*-16-*-*-*-*-*-iso10646-*
-font xft:Liberation Mono 11
+# font xft:Liberation Mono 11
+# font 9x15
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
 # start a terminal
 # bindsym $mod+Return exec i3-sensible-terminal
-bindsym $mod+Return exec xfce4-terminal
+bindsym $mod+Return exec rxvt-unicode
 
 # kill focused window
 bindsym $mod+Shift+Q kill
 
 # start dmenu (a program launcher)
-bindsym $mod+s exec dmenu_run
+bindsym $mod+s exec dmenu_run -fn 9x15
 
 # change focus
 bindsym $mod+h focus left
@@ -157,11 +158,13 @@ bar {
 	status_command i3status # --config ~/.i3/i3status.conf
 }
 
-bindsym $mod+x exec gnome-screensaver-command -l
-#bindsym $mod+g exec nautilus
+bindsym $mod+x exec xscreensaver-command -l
+bindsym $mod+g exec thunar
 
 for_window [class="Smplayer"] floating enable
 for_window [class="Mplayer"] floating enable
+for_window [class="Xfce4-notifyd"] floating enable
 
 force_xinerama yes
 
+exec ~/dotfiles/public/startup.sh

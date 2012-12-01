@@ -1,9 +1,10 @@
 ;;; ===========================================================================
 ;;; Francesco's emacs config, <f@mazzo.li>
 ;;; Packages needed: paredit-el, wl-beta, auto-complete-el, haskell-mode,
-;;; erlang-mode, w3m-el, bbdb, slime, elib, cscope-el
+;;; erlang-mode, w3m-el, bbdb, slime, elib, cscope-el, coq, proofgeneral,
+;;; tuareg, org-mode
 ;;; Non-debian packages: distel, undo-tree, highlight-parentheses, agda2,
-;;; sicstus, ghc-mod
+;;; sicstus, ghc-mod, typopunct
 
 ;;; Additional dirs
 (add-to-list 'load-path "~/.emacs.d/site-lisp/distel")
@@ -16,7 +17,9 @@
 (require 'agda2)
 (require 'auto-complete-config)
 (require 'bbdb-wl)
+(require 'camldebug)
 (require 'cl)
+(require 'color-theme)
 (require 'dbus)
 (require 'dired)
 (require 'dired-x)
@@ -29,10 +32,14 @@
 (require 'markdown-mode)
 (require 'mime-w3m) ; If w3m is not loaded wl won't display html
 (require 'org)
+(require 'pandoc-mode)
 (require 'perldoc)
+(require 'coq)
 (require 'saveplace)
 (require 'slime-autoloads)
 (require 'tls)
+(require 'tuareg)
+(require 'typopunct)
 (require 'undo-tree)
 (require 'uniquify)
 (require 'w3m)
@@ -96,7 +103,6 @@ filepath."
 (when window-system
   (scroll-bar-mode -1)
   (tool-bar-mode -1))
-;; (menu-bar-mode -1)
 (column-number-mode 1)
 
 ;;; ===========================================================================
@@ -107,31 +113,31 @@ filepath."
 (setq whitespace-style '(face lines-tail)
       whitespace-line-column 80)
 (my-add-prog-modes-hook (lambda ()
-                       ; We use `show-trailing-whitespace' instead of
-                       ; `whitespace-mode' because the former plays better with
-                       ; auto-complete
-                       (setq show-trailing-whitespace t)
-                       (show-paren-mode 1)
-                       (whitespace-mode 1)
-                       (highlight-parentheses-mode)))
+                          ; We use `show-trailing-whitespace' instead of
+                          ; `whitespace-mode' because the former plays better
+                          ; with auto-complete
+                          (setq show-trailing-whitespace t)
+                          (show-paren-mode 1)
+                          (whitespace-mode 1)
+                          (highlight-parentheses-mode)))
 
 ;;; TODO I'd like to have the colors set in a more programmatic way - e.g. with
 ;;; color-theme - so that I can switch easily between dark and light.
 (when window-system
+  (set-cursor-color "palegoldenrod")
   (global-hl-line-mode 1)
+  (invert-face 'default)
   (set-face-background 'hl-line "#1a1a1a")
   ;; we set the completion as well, since completions will
   ;; always be on the highlighted line
   (set-face-background 'ac-completion-face "#1a1a1a")
-  (set-cursor-color "palegoldenrod")
-  (invert-face 'default)
   ;; But not in ERC
   (add-hook 'erc-mode-hook (lambda () (global-hl-line-mode -1))))
 
 ;;; The best compromise is Liberation Mono with no antialiasing (specified via
 ;;; fontconfig), and DejaVu Sans Mono for unicode.
-(set-frame-font "Liberation Mono-12")
-(set-fontset-font "fontset-default" 'unicode "DejaVu Sans Mono-12")
+;; (set-frame-font "Liberation Mono-12")
+;; (set-fontset-font "fontset-default" 'unicode "DejaVu Sans Mono-12")
 
 ;; (set-frame-font "Liberation Mono-10")
 ;; (set-frame-font "Liberation Mono-11")
@@ -139,6 +145,7 @@ filepath."
 
 ;; (set-frame-font "-*-terminus-medium-*-*-*-17-*-*-*-*-*-iso10646-*")
 
+(set-frame-font "9x15")
 ;; (set-frame-font "-misc-fixed-medium-r-normal-*-15-*-*-*-*-*-iso10646-*")
 ;; (set-frame-font "-misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1")
 
@@ -172,10 +179,10 @@ filepath."
 ;;; Miscellanea
 
 (ido-mode 1)
-(setq x-select-enable-clipboard t)
-(setq backup-directory-alist '(("." . "~/.emacs-backups")))
+(setq x-select-enable-clipboard t
+      backup-directory-alist '(("." . "~/.emacs-backups"))
+      uniquify-buffer-name-style 'forward)
 (setq-default indent-tabs-mode nil)
-(setq uniquify-buffer-name-style 'forward)
 (setq-default save-place t)
 (put 'narrow-to-region 'disabled nil)
 (setq-default fill-column 80)
@@ -183,6 +190,13 @@ filepath."
 (desktop-save-mode 1)
 (setq calendar-week-start-day 1)
 (winner-mode 1)
+(setq mouse-autoselect-window t)
+
+;;; Typopunct
+(typopunct-change-language 'english t)
+(add-hook 'org-mode-hook (lambda () (typopunct-mode 1)))
+(add-hook 'wl-draft-mode-hook (lambda () (typopunct-mode 1)))
+(add-hook 'erc-mode-hook (lambda () (typopunct-mode 1)))
 
 ;;; --insecure is needed for WL, since we can't verify the IMAP and SMTP
 ;;; certificates.  ssl is for IMAP starttls for SMTP.
@@ -215,7 +229,6 @@ filepath."
     (if url
         (browse-url url)
       (message "No URL under point."))))
-
 
 ;;; TODO do I need this stuff below, now that I have emacs-style key bindings in
 ;;; GNOME?
@@ -260,7 +273,8 @@ filepath."
 
 (setq dired-guess-shell-alist-user
       '(("\\.\\(avi\\|wmv\\|mp4\\)$" "smplayer")
-        ("\\.\\(gif\\|tif\\|png\\|jpe?g\\|p[bgpn]m\\)$" "eog")))
+        ("\\.\\(gif\\|tif\\|png\\|jpe?g\\|p[bgpn]m\\)$" "eog")
+        ("\\.pdf$" "evince")))
 
 ;;; ===========================================================================
 ;;; Languages
@@ -285,19 +299,62 @@ filepath."
 ;;; ---------------------------------------------------------------------------
 ;;; java
 
-(add-hook 'java-mode-hook (lambda ()
-                            (setq c-basic-offset 4)))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/site-lisp/jdee"))
 
-;;; TODO setup JDEE/eclim properly...
+(setq semantic-default-submodes '(global-semantic-idle-scheduler-mode
+                                  global-semanticdb-minor-mode
+                                  global-semantic-idle-summary-mode
+                                  global-semantic-stickyfunc-mode
+                                  global-semantic-mru-bookmark-mode))
+
+(setq semantic-load-turn-everything-on t)
+(semantic-mode 1)
+(require 'semantic)
+(require 'semantic/senator)
+(require 'semantic/ia)
+(require 'semantic/wisent)
+(require 'semantic/wisent/java-tags)
+
+(setq jde-auto-parse-enable nil)
+(setq jde-enable-senator nil)
+(load "jde-autoload")
+
+(require 'jde)
+
+(setq jde-ant-enable-find t
+      jde-build-function 'jde-ant-build
+      jde-ant-args "compile")
+
+(add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode))
+
+(push 'jde-mode ac-modes)
+
+(setq jde-jdk '("1.6")
+      jde-jdk-registry '(("1.6" . "/usr/lib/jvm/java-1.6.0-openjdk-amd64")))
+
+(define-key jde-mode-map (kbd "<f5>") 'jde-build)
+(define-key jde-mode-map (kbd "<f6>") 'jde-run)
+
+(defun java-hooks ()
+  (wisent-java-default-setup)
+  (setq c-basic-offset 4)
+  (setq fill-column 80)
+  (setq whitespace-line-column 80)
+  (jde-abbrev-mode))
+
+(add-hook 'jde-mode-hook 'java-hooks)
+(add-hook 'java-mode-hook 'java-hooks)
+
+;;; ---------------------------------------------------------------------------
+;;; pandoc
+
+(setq pandoc-binary "pandoc")
 
 ;;; ---------------------------------------------------------------------------
 ;;; Agda
 
 (setq agda2-include-dirs
-      (list "." (expand-file-name "~/installs/agda-stdlib/lib-0.6/src"))
-
-      ;; agda2-fontset-name "DejaVu Sans Mono-12"
-      )
+      (list "." (expand-file-name "~/installs/agda-stdlib/lib-0.6/src")))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Sicstus prolog
@@ -435,7 +492,7 @@ filepath."
 (add-hook 'latex-mode-hook (lambda () (flyspell-mode 1)))
 (add-hook 'mime-edit-mode-hook (lambda () (flyspell-mode 1)))
 (add-hook 'erc-mode-hook (lambda () (erc-spelling-mode 1)))
-(my-add-prog-modes-hook (lambda () (flyspell-prog-mode 1)))
+;; (my-add-prog-modes-hook (lambda () (flyspell-prog-mode 1)))
 
 ;;; ===========================================================================
 ;;; org-mode/calendar
@@ -451,13 +508,12 @@ filepath."
 
 (setq erc-modules
       '(autojoin button completion irccontrols list match menu
-        move-to-prompt netsplit networks noncommands readonly ring
-        scrolltobottom stamp track fill log)
+                 move-to-prompt netsplit networks noncommands readonly ring
+                 scrolltobottom stamp track fill log)
 
       erc-autojoin-channels-alist
       '(("freenode.net" "#haskell" "#haskell-blah" "#agda" "#erlang"
-         "#sml" "#racket" "#rabbitmq" "#emacs" "#lisp" "#deskthority"
-         "#geekhack")
+         "#sml" "#racket" "#rabbitmq" "#emacs" "#lisp" "##logic")
         ("twice-irc.de" "#i3"))
 
       erc-nick "bitonic"
@@ -470,7 +526,12 @@ filepath."
 
       erc-server-reconnect-timeout 10
 
-      erc-log-channels-directory "~/.erc/logs/")
+      erc-log-channels-directory "~/.erc/logs/"
+
+      erc-truncate-buffer-on-save t)
+
+(add-hook 'erc-insert-post-hook
+          'erc-truncate-buffer)
 
 ;;; Load account stuff
 (load "irc")
@@ -705,7 +766,7 @@ will be cleaned up")
 
 (setq wl-account-default-signature "")
 
-(defun wl-account-setup (account)
+(defun wl-account-setup (account &optional auto-read)
   (add-to-list 'wl-user-mail-address-list (wl-account-address account))
   (add-to-list 'wl-auto-read-folders
                (wl-account-folder account (wl-account-sent account)))
@@ -713,8 +774,9 @@ will be cleaned up")
                (wl-account-folder account (wl-account-draft account)))
   (add-to-list 'wl-auto-read-folders
                (wl-account-folder account (wl-account-trash account)))
-  (add-to-list 'wl-biff-check-folder-list
-               (wl-account-folder account (wl-account-inbox account))))
+  (when auto-read
+    (add-to-list 'wl-biff-check-folder-list
+                 (wl-account-folder account (wl-account-inbox account)))))
 
 (defun wl-account-base-folder (account)
   (concat ":\"" (wl-account-user account) "\"/clear@"
@@ -755,6 +817,7 @@ will be cleaned up")
            (wl-local-domain . ,(wl-account-domain account))
            (wl-message-id-domain . ,(wl-account-domain account))
            ("Fcc" . ,(wl-account-folder account (wl-account-sent account)))
+           (delete-field . "Newsgroups")
            ;; TODO: This does not work
            ;; (wl-draft-folder . ,(wl-account-folder account
            ;;                                         (wl-account-draft account)))
@@ -837,9 +900,6 @@ will be cleaned up")
 
       wl-prefetch-confirm nil
       wl-message-buffer-prefetch-folder-type-list '(imap4 nntp)
-      wl-message-buffer-prefetch-depth 9
-      wl-message-buffer-prefetch-threshold nil
-      wl-auto-prefetch-first t
 
       elmo-message-fetch-confirm nil
       elmo-message-fetch-threshold nil
@@ -848,7 +908,9 @@ will be cleaned up")
 
       wl-use-scoring nil
 
-      elmo-localdir-folder-path (expand-file-name "~/mail"))
+      elmo-localdir-folder-path (expand-file-name "~/mail")
+
+      wl-nntp-posting-server "news.gmane.org")
 
 ;;; TODO: Use this only if the folder is fully fetched
 ;; (define-key wl-folder-mode-map " "
@@ -873,17 +935,14 @@ will be cleaned up")
 ;;; ---------------------------------------------------------------------------
 ;;; BBDB
 
-;;; TODO this doesn't work!  also, it'd be nice to have a way to add domains to
-;;; `bbdb-ignore-some-messages-alist' in the BBDB buffer directly
-
 (bbdb-wl-setup)
-(setq bbdb-offer-save 1                        ; 1 means save-without-asking
+(setq bbdb-offer-save 1                 ; This doesn't work
 
-      bbdb-use-pop-up t                        ; allow popups for addresses
+      bbdb-use-pop-up t
       bbdb-electric-p t                        ; be disposable with SPC
-      bbdb-popup-target-lines  1               ; very small
+      bbdb-popup-target-lines  1
 
-      bbdb-dwim-net-address-allow-redundancy t ; always use full name
+      bbdb-dwim-net-address-allow-redundancy t
       bbdb-quiet-about-name-mismatches t
 
       bbdb-always-add-address t                ; add new addresses to existing...
@@ -899,13 +958,12 @@ will be cleaned up")
 
       bbdb-elided-display t                    ; single-line addresses
 
-      ;; auto-create addresses from mail
-      bbdb/mail-auto-create-p 'bbdb-ignore-some-messages-hook
-
       bbdb-north-american-phone-numbers-p nil
 
-      ;; NOTE: there can be only one entry per header (such as To, From)
-      ;; http://flex.ee.uec.ac.jp/texi/bbdb/bbdb_11.html
-      bbdb-ignore-some-messages-alist
-      `(("From" . ,(concat "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|"
-                           "gmane\\|ebay\\|amazon\\|tfl\\|trenitalia"))))
+      ;; auto-create addresses from mail
+      ;; bbdb/mail-auto-create-p 'bbdb-ignore-some-messages-hook
+      ;; bbdb/news-auto-create-p 'bbdb-ignore-some-messages-hook
+      )
+
+(setq bbdb-user-mail-names
+      "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|gmane\\|ebay\\|amazon\\|tfl\\|trenitalia")

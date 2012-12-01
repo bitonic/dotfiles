@@ -9,9 +9,5 @@ record =
 hgshelve = ~/installs/hgshelve/hgshelve.py
 churn =
 
-[ui]
-merge = meld
 
-[extdiff]
-cmd.meld
 
