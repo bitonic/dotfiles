@@ -16,7 +16,8 @@ trackpoint_accel=yes
 redshift=
 gnome_keyring=yes
 wicd=
-xsetroot=yes
+xsetroot=
+sfondi_terra=yes
 setxkbmap=yes
 nm=yes
 
@@ -115,8 +116,13 @@ if [ -n "$wicd" ]; then
 fi
 
 if [ -n "$xsetroot" ]; then
-    xsetroot -solid "#000000"
+    feh --bg-fill pictures/manatee.JPG
+    # xsetroot -solid "#f0f0f0"
 fi
+
+if [ -n "$sfondi_terra" ]; then
+    files=(/home/bitonic/pictures/sfondi_terra/*)
+    feh --bg-fill ${files[RANDOM % ${#files[@]}]}
 
 if [ -n "$setxkbmap" ]; then
     setxkbmap -option 'grp:alt_space_toggle' 'gb(colemak),gb'

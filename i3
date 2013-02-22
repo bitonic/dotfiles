@@ -155,7 +155,7 @@ bindsym $mod+p mode "resize"
 # finds out, if available)
 bar {
 	position bottom
-	status_command i3status # --config ~/.i3/i3status.conf
+	status_command i3status
 }
 
 bindsym $mod+x exec xscreensaver-command -l

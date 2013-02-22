@@ -1,16 +1,17 @@
 ;;; ===========================================================================
 ;;; Francesco's emacs config, <f@mazzo.li>
-;;; Packages needed: paredit-el, wl-beta, auto-complete-el, haskell-mode,
-;;; erlang-mode, w3m-el, bbdb, slime, elib, cscope-el, coq, proofgeneral,
-;;; tuareg, org-mode
-;;; Non-debian packages: distel, undo-tree, highlight-parentheses, agda2,
-;;; sicstus, ghc-mod, typopunct
+;;; Packages needed: paredit-el wl-beta auto-complete-el haskell-mode
+;;; erlang-mode w3m-el bbdb slime elib cscope-el coq proofgeneral tuareg-mode
+;;; org-mode emacs-goodies-el
+;;; Non-debian packages: distel undo-tree highlight-parentheses agda2 sicstus
+;;; ghc-mod typopunct cedet-1.1
 
 ;;; Additional dirs
 (add-to-list 'load-path "~/.emacs.d/site-lisp/distel")
 (add-to-list 'load-path "~/.emacs.d/site-lisp/sicstus")
 (add-to-list 'load-path "~/.emacs.d/site-lisp/agda")
 (add-to-list 'load-path "~/.emacs.d/site-lisp/ghc-mod")
+(require 'otter)
 
 ;;; TODO For some reason (require 'ghc) won't work, investigate
 (autoload 'ghc-init "ghc" nil t)
@@ -19,7 +20,7 @@
 (require 'bbdb-wl)
 (require 'camldebug)
 (require 'cl)
-(require 'color-theme)
+(require 'coffee-mode)
 (require 'dbus)
 (require 'dired)
 (require 'dired-x)
@@ -32,9 +33,8 @@
 (require 'markdown-mode)
 (require 'mime-w3m) ; If w3m is not loaded wl won't display html
 (require 'org)
-(require 'pandoc-mode)
+;; (require 'pandoc-mode)
 (require 'perldoc)
-(require 'coq)
 (require 'saveplace)
 (require 'slime-autoloads)
 (require 'tls)
@@ -121,18 +121,7 @@ filepath."
                           (whitespace-mode 1)
                           (highlight-parentheses-mode)))
 
-;;; TODO I'd like to have the colors set in a more programmatic way - e.g. with
-;;; color-theme - so that I can switch easily between dark and light.
-(when window-system
-  (set-cursor-color "palegoldenrod")
-  (global-hl-line-mode 1)
-  (invert-face 'default)
-  (set-face-background 'hl-line "#1a1a1a")
-  ;; we set the completion as well, since completions will
-  ;; always be on the highlighted line
-  (set-face-background 'ac-completion-face "#1a1a1a")
-  ;; But not in ERC
-  (add-hook 'erc-mode-hook (lambda () (global-hl-line-mode -1))))
+(set-background-color "#f0f0f0")
 
 ;;; The best compromise is Liberation Mono with no antialiasing (specified via
 ;;; fontconfig), and DejaVu Sans Mono for unicode.
@@ -280,12 +269,22 @@ filepath."
 ;;; Languages
 
 ;;; ---------------------------------------------------------------------------
+;;; CEDET
+
+(load "minimial-cedet-config")
+
+;;; ---------------------------------------------------------------------------
 ;;; C
 
 (defun my-c-k&r ()
   (interactive)
   (setq c-default-style "k&r"
         c-basic-offset  4))
+
+(defun my-c-k&r-nooffset ()
+  (interactive)
+  (my-c-k&r)
+  (setq whitespace-line-column nil))
 
 (defun my-c-gnu ()
   (interactive)
@@ -299,51 +298,24 @@ filepath."
 ;;; ---------------------------------------------------------------------------
 ;;; java
 
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/site-lisp/jdee"))
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/site-lisp/jdee/lisp"))
+;; (load "jde-autoload")
+;; (require 'jde)
 
-(setq semantic-default-submodes '(global-semantic-idle-scheduler-mode
-                                  global-semanticdb-minor-mode
-                                  global-semantic-idle-summary-mode
-                                  global-semantic-stickyfunc-mode
-                                  global-semantic-mru-bookmark-mode))
+;; (setq jde-auto-parse-enable nil
+;;       jde-enable-senator nil
+;;       jde-ant-enable-find t
+;;       jde-build-function 'jde-ant-build
+;;       jde-ant-args "build")
 
-(setq semantic-load-turn-everything-on t)
-(semantic-mode 1)
-(require 'semantic)
-(require 'semantic/senator)
-(require 'semantic/ia)
-(require 'semantic/wisent)
-(require 'semantic/wisent/java-tags)
+;; (add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode))
 
-(setq jde-auto-parse-enable nil)
-(setq jde-enable-senator nil)
-(load "jde-autoload")
+;; (setq jde-jdk-registry '(("1.6" . "/usr/lib/jvm/java-1.6.0-openjdk-amd64"))
+;;      jde-jdk '("1.6"))
 
-(require 'jde)
-
-(setq jde-ant-enable-find t
-      jde-build-function 'jde-ant-build
-      jde-ant-args "compile")
-
-(add-to-list 'auto-mode-alist '("\\.java\\'" . jde-mode))
-
-(push 'jde-mode ac-modes)
-
-(setq jde-jdk '("1.6")
-      jde-jdk-registry '(("1.6" . "/usr/lib/jvm/java-1.6.0-openjdk-amd64")))
-
-(define-key jde-mode-map (kbd "<f5>") 'jde-build)
-(define-key jde-mode-map (kbd "<f6>") 'jde-run)
-
-(defun java-hooks ()
-  (wisent-java-default-setup)
-  (setq c-basic-offset 4)
-  (setq fill-column 80)
-  (setq whitespace-line-column 80)
-  (jde-abbrev-mode))
-
-(add-hook 'jde-mode-hook 'java-hooks)
-(add-hook 'java-mode-hook 'java-hooks)
+(add-hook 'java-mode-hook
+          (lambda ()
+            (setq c-basic-offset 4)))
 
 ;;; ---------------------------------------------------------------------------
 ;;; pandoc
@@ -354,7 +326,7 @@ filepath."
 ;;; Agda
 
 (setq agda2-include-dirs
-      (list "." (expand-file-name "~/installs/agda-stdlib/lib-0.6/src")))
+      (list "." (expand-file-name "~/src/agda-lib/src")))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Sicstus prolog
@@ -380,7 +352,7 @@ filepath."
       haskell-indentation-ifte-offset 4)
 
 (add-hook 'haskell-mode-hook (lambda ()
-                               (turn-on-haskell-indentation)
+                               ;; (turn-on-haskell-indentation)
                                (turn-on-font-lock)
                                (setq whitespace-line-column 90)))
 
@@ -513,7 +485,8 @@ filepath."
 
       erc-autojoin-channels-alist
       '(("freenode.net" "#haskell" "#haskell-blah" "#agda" "#erlang"
-         "#sml" "#racket" "#rabbitmq" "#emacs" "#lisp" "##logic")
+         "#sml" "#racket" "#rabbitmq" "#emacs" "#lisp" "##logic"
+         "#idris" "#epigram")
         ("twice-irc.de" "#i3"))
 
       erc-nick "bitonic"
@@ -555,7 +528,7 @@ filepath."
 (defun my-invert-color (color)
   (mapcar (lambda (comp) (- 255 comp)) color))
 
-(defun erc-get-color-for-nick (nick dark)
+(defun erc-get-color-for-nick (nick &optional dark)
   (let* ((hash   (md5 nick))
          (red    (mod (string-to-number (substring hash 0 10) 16) 256))
          (blue   (mod (string-to-number (substring hash 10 20) 16) 256))
@@ -575,7 +548,7 @@ filepath."
         (when (erc-get-server-user nick)
           (put-text-property
            (car bounds) (cdr bounds) 'face
-           (cons 'foreground-color (erc-get-color-for-nick nick 't))))))))
+           (cons 'foreground-color (erc-get-color-for-nick nick))))))))
 
 (add-hook 'erc-insert-modify-hook 'erc-highlight-nicknames)
 
@@ -966,4 +939,4 @@ will be cleaned up")
       )
 
 (setq bbdb-user-mail-names
-      "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|gmane\\|ebay\\|amazon\\|tfl\\|trenitalia")
+      "no.?reply\\|DAEMON\\|daemon\\|facebookmail\\|gmane\\|ebay\\|amazon\\|tfl\\|trenitalia\\|github")

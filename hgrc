@@ -3,11 +3,7 @@ username = Francesco Mazzoli <francesco@rabbitmq.com>
 
 [extensions]
 color =
-hgext.extdiff =
 rebase =
 record = 
 hgshelve = ~/installs/hgshelve/hgshelve.py
 churn =
-
-
-

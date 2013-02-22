@@ -16,6 +16,8 @@ replace ~/.rtorrent.rc                                rtorrentrc
 replace ~/.fonts.conf                                 fonts.conf
 replace ~/.offlineimap.py                             offlineimap.py
 replace ~/.zshrc.local                                zshrc
+replace ~/.conkyrc                                    conkyrc
+replace ~/.Xdefaults                                  Xdefaults
 
 replace ~/.emacs.d/francesco.el                       emacs/francesco.el
 replace ~/.emacs.d/basic-bindings.el                  emacs/basic-bindings.el
